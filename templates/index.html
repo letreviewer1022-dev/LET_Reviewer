@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LET TLE Reviewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet">
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        
+        <div id="flash-popup-overlay" class="popup-overlay">
+            
+            <div class="popup-content" onclick="event.stopPropagation();">
+                {% for category, message in messages %}
+                    
+                    <div class="alert alert-{{ category }}" role="alert">
+                        
+                        {{ message }}
+                        
+                        <button type="button" class="close-btn" aria-label="Close" 
+                                onclick="closeFlashPopup();">
+                            &times;
+                        </button>
+                    </div>
+
+                {% endfor %}
+            </div>
+            
+        </div>
+
+        <script>
+            function closeFlashPopup() {
+                const overlay = document.getElementById('flash-popup-overlay');
+                if (overlay) {
+                    overlay.style.display = 'none';
+                }
+            }
+        </script>
+
+    {% endif %}
+{% endwith %}
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" class="logo" alt="Logo"></a>
+        </div>
+
+        <button class="hamburger" id="hamburger">☰</button>
+
+        <ul class="nav-center" id="nav-menu">
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('quiz') }}">Quiz</a></li>
+            <li><a href="{{ url_for('mock') }}">Mock Exam</a></li>
+        </ul>
+
+        <div class="nav-right">
+            {% if 'username' in session %}
+                
+                {% if session.get('is_admin') %}
+                    <a href="{{ url_for('admin_dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% else %}
+                    <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% endif %}
+                
+            {% else %}
+                <a href="{{ url_for('login') }}" class="login-btn">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="intro">
+        <div class="intro-text">   
+            <h1> LET TLE REVIEWER </h1>
+            <p> An interactive online reviewer designed specifically for Licensure Examiners, providing comprehensive study materials, practice exams, and targeted resources for TLE (Technology and Livelihood Education) majors to enhance preparation and increase success rates on licensure examinations.</p>
+            <button onclick="document.getElementById('started-section').scrollIntoView({ behavior: 'smooth' });" class="intro-button">
+                Get Started
+            </button>
+        </div>
+        
+        <div class="intro-image">
+            <img src="{{ url_for('static', filename='images/let-intro-examination.jpg')}}" alt="LET Examination">
+        </div>
+    </div>
+
+    <section id="started-section" class="started-section">
+        <div class="started-text">
+            <H1> Get Started </H1>
+        </div>
+
+    
+        <div class="started-container">
+            <div class="started-box">
+                <img src="{{ url_for('static', filename='images/quiz.png')}}" alt="quiz">
+                <h1> TLE Quiz </h1>
+                <p> Test your knowledge with interactive quizzes tailored for TLE subjects. </p>
+                <button id="quizButton" class="started-button">Take a Quiz</button>
+            </div>
+            <div class="started-box">
+                <img src="{{ url_for('static', filename='images/exam.png')}}" alt="exam">
+                <h1> Mock Exam </h1>
+                <p> Simulate real exam conditions with our comprehensive mock exams. </p>
+                <button id="mockButton" class="started-button">Take a Mock Exam</button>
+            </div>
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        <p>&copy; 2025 LET TLE Reviewer. All rights reserved.</p>
+        <p>
+            All icon made by 
+            <a href="https://www.freepik.com/icon/quiz_3407041" target="_blank" rel="noopener noreferrer">
+                Freepik
+            </a> 
+            from 
+            <a href="https://www.freepik.com" target="_blank" rel="noopener noreferrer">
+                www.freepik.com
+            </a>
+        </p>
+    </footer>
+
+
+
+    <script>
+        const hamburger = document.getElementById('hamburger');
+        const navMenu = document.getElementById('nav-menu');
+
+        hamburger.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+        });
+
+        document.getElementById('quizButton').addEventListener('click', function() {
+            window.location.href = "{{ url_for('quiz') }}";
+        });
+
+        document.getElementById('mockButton').addEventListener('click', function() {
+            window.location.href = "{{ url_for('mock') }}";
+        });
+    </script>
+
+</body>
+
+</html>

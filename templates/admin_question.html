@@ -1,0 +1,403 @@
+
+{% macro include_cards(questions_list, subject_tag) %}
+    {% if questions_list %}
+        <!-- Selection Toolbar -->
+        <div class="selection-toolbar">
+            <label class="select-all-label">
+                <input type="checkbox" onchange="toggleSelectAll(this, '{{ subject_tag }}')">
+                Select All {{ subject_tag|upper }}
+            </label>
+            <span class="count-badge">{{ questions_list|length }} Cards</span>
+        </div>
+
+        <!-- Card Grid -->
+        <div class="question-grid">
+            {% for q in questions_list %}
+            <div class="question-card" id="card-{{ q.id }}" onclick="toggleCardSelect('{{ q.id }}')">
+                
+                <div class="card-header">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" name="question_ids" class="q-checkbox checkbox-{{ subject_tag }}" value="{{ q.id }}" onclick="event.stopPropagation()">
+                    </div>
+                    <span class="card-id">#{{ q.id }}</span>
+                    <span class="card-subject">{{ q.subject|upper }}</span>
+                </div>
+
+                <div class="card-body">
+                    <p class="question-admin-text">{{ q.question_text }}</p>
+                </div>
+
+                <div class="card-choices">
+                    <!-- Highlight the correct answer dynamically -->
+                    <div class="choice-item {% if q.correct_answer|lower == 'a' %}correct-choice{% endif %}">
+                        <span class="letter">A</span> {{ q.choice_a }}
+                    </div>
+                    <div class="choice-item {% if q.correct_answer|lower == 'b' %}correct-choice{% endif %}">
+                        <span class="letter">B</span> {{ q.choice_b }}
+                    </div>
+                    <div class="choice-item {% if q.correct_answer|lower == 'c' %}correct-choice{% endif %}">
+                        <span class="letter">C</span> {{ q.choice_c }}
+                    </div>
+                    <div class="choice-item {% if q.correct_answer|lower == 'd' %}correct-choice{% endif %}">
+                        <span class="letter">D</span> {{ q.choice_d }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="no-questions">No questions found for {{ subject_tag|upper }}.</p>
+    {% endif %}
+{% endmacro %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LET TLE Reviewer - Admin Questions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- NAVBAR (Unchanged) -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" class="logo" alt="Logo"></a>
+        </div>
+        <button class="hamburger" id="hamburger">☰</button>
+        <ul class="nav-center" id="nav-menu">
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('quiz') }}">Quiz</a></li>
+            <li><a href="{{ url_for('mock') }}">Mock Exam</a></li>
+        </ul>
+        <div class="nav-right">
+            {% if 'username' in session %}
+                {% if session.get('is_admin') %}
+                    <a href="{{ url_for('admin_dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% else %}
+                    <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% endif %}
+            {% else %}
+                <a href="{{ url_for('login') }}" class="login-btn">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div id="flash-popup-overlay" class="popup-overlay" role="dialog" aria-modal="true">
+                <div class="popup-content" onclick="event.stopPropagation();">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" role="alert">
+                            {{ message }}
+                            <button type="button" class="close-btn" aria-label="Close" onclick="closeFlashPopup();">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <script>
+                function closeFlashPopup() { document.getElementById('flash-popup-overlay').style.display = 'none'; }
+                setTimeout(closeFlashPopup, 5000); 
+            </script>
+        {% endif %}
+    {% endwith %}
+
+    <div id="upload-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="uploadModalHeading">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeAllModals()" aria-label="Close Upload Form">&times;</span>
+            <h3 id="uploadModalHeading">Step 1: Select Question File</h3>
+            <form id="file-upload-form" onsubmit="return handleFileUpload(event)">
+                <label for="file-input" class="file-label">Choose CSV, DOCX, or PDF file:</label>
+                <input type="file" name="file" id="file-input" accept=".csv,.docx,.pdf" required>
+                <br>
+                <p class="file-format-note">*File format must strictly match the parser's expected structure.</p>
+                <button type="submit" class="next-button">Next: Select Subject →</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="subject-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="subjectModalHeading">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeAllModals()" aria-label="Close Subject Selection">&times;</span>
+            <h3 id="subjectModalHeading">Step 2: Assign Subject Category</h3>
+            <p>Assigning subject for file: <strong id="selected-filename" class="file-name-display"></strong></p>
+            <form id="subject-selection-form" method="POST" action="{{ url_for('submit_upload') }}">
+                <input type="hidden" name="subject_tag" id="subject-tag-input" required> 
+                <div class="subject-grid">
+                    {% for s in allowed_subjects %}
+                        <button type="button" class="subject-button" data-subject="{{ s }}">{{ s|upper }}</button>
+                    {% endfor %}
+                </div>
+                <br>
+                <button type="submit" id="final-submit-button" class="action-button" disabled>Finalize Upload</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="delete-modal" class="modal" role="alertdialog" aria-modal="true" aria-labelledby="deleteModalHeading">
+        <div class="modal-content delete-modal-content">
+            <span class="close-button" onclick="closeAllModals()" aria-label="Close Confirmation">&times;</span>
+            <h3 id="deleteModalHeading">Confirm Deletion</h3>
+            <p>Are you sure you want to delete <strong id="delete-count-display"></strong> selected question(s)?</p>
+            <div class="modal-actions">
+                <button type="button" class="action-button cancel-button" onclick="closeAllModals()">Cancel</button>
+                <button type="button" class="action-button delete-confirm-button" onclick="submitDeleteForm()">Delete Permanently</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="dashboard-container admin-dashboard-question">
+        <!-- SIDEBAR (Unchanged) -->
+        <div class="user-sidebar">
+            <img src="{{ url_for('static', filename='images/admin_profile.png') }}" alt="User Profile Picture" class="profile-pic">
+                {% if current_user %}
+                    <span class="user-name">{{ current_user.username }}</span>
+                {% else %}
+                    <span class="user-name">Guest User</span>
+                {% endif %}
+            <p>Admin</p>
+            <ul class="sidebar-menu">
+                <li><a href="{{ url_for('admin_question')}}" class="active-link">Questions</a></li>
+                <li><a href="{{ url_for('admin_student') }}">Students</a></li>
+                <li><a href="{{ url_for('admin_attempt') }}">Attempts</a></li>
+            </ul> 
+            <div class="flex-grow"></div> 
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+
+        <div class="content-area">
+            <header class="main-header">
+                <h1>Questions Management</h1>
+                <p> The file should follow this format:</p>
+                <p><strong>Docx:</strong> Question, A), B), C), D),</p>
+                <p><strong>CSV *UTC:</strong> Question, A, B, C, D,</p>
+            </header>
+            
+            <div class="admin-controls">
+                <button class="action-button add-button" onclick ="showModal('upload-modal')">➕ Add Questions</button>
+                <button class="action-button delete-button" onclick="prepareBatchDelete()">🗑️ Delete Selected</button>
+            </div>
+            
+            <div id="flash-message-container"></div>
+            
+            <form id="batch-delete-form" method="POST" action="{{ url_for('delete_question') }}">
+                
+                <!-- 1. PROFED -->
+                {% set profed_questions = subjects.profed or [] %}
+                <div class="subject-section">
+                    <h3>Professional Education</h3>
+                    {{ include_cards(profed_questions, 'profed') }}
+                </div>
+                
+                <!-- 2. GENED -->
+                {% set gened_questions = subjects.gened or [] %}
+                <div class="subject-section">
+                    <h3>General Education</h3>
+                    {{ include_cards(gened_questions, 'gened') }}
+                </div>
+
+                <!-- 3. MAJORS -->
+                {% set major_subjects = ['cp', 'et', 'he', 'ia', 'ict'] %}
+                {% set major_questions = [] %}
+                {% for s in major_subjects %}
+                    {% set major_questions = major_questions + (subjects[s] or []) %}
+                {% endfor %}
+
+                <div class="subject-section">
+                    <h3>TLE Specialization</h3>
+                    {{ include_cards(major_questions, 'majors') }}
+                </div>
+
+            </form>
+        </div> 
+    </div> 
+
+    <!-- --- MODALS (Unchanged Logic, visual style in CSS) --- -->
+    
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeAllModals()">&times;</span>
+            <h3>Step 1: Select Question File</h3>
+            <form id="file-upload-form" onsubmit="return handleFileUpload(event)">
+                <label for="file-input" class="file-label">Choose CSV, DOCX, or PDF file:</label>
+                <input type="file" name="file" id="file-input" accept=".csv,.docx,.pdf" required>
+                <br>
+                <p class="file-format-note">*File format must strictly match the parser's expected structure.</p>
+                <button type="submit" class="next-button">Next: Select Subject →</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Subject Modal -->
+    <div id="subject-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeAllModals()">&times;</span>
+            <h3>Step 2: Assign Subject Category</h3>
+            <p>Assigning subject for file: <strong id="selected-filename" class="file-name-display"></strong></p>
+            <form id="subject-selection-form" method="POST" action="{{ url_for('submit_upload') }}">
+                <input type="hidden" name="subject_tag" id="subject-tag-input" required> 
+                <div class="subject-grid">
+                    {% for s in allowed_subjects %}
+                        <button type="button" class="subject-button" data-subject="{{ s }}">{{ s|upper }}</button>
+                    {% endfor %}
+                </div>
+                <br>
+                <button type="submit" id="final-submit-button" class="action-button" disabled>Finalize Upload</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="modal">
+        <div class="modal-content delete-modal-content">
+            <span class="close-button" onclick="closeAllModals()">&times;</span>
+            <h3>Confirm Deletion</h3>
+            <p>Are you sure you want to delete <strong id="delete-count-display"></strong> selected question(s)?</p>
+            <div class="modal-actions">
+                <button type="button" class="action-button cancel-button" onclick="closeAllModals()">Cancel</button>
+                <button type="button" class="action-button delete-confirm-button" onclick="submitDeleteForm()">Delete Permanently</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- --- JAVASCRIPT --- -->
+    <script>
+        let tempFile = null;
+        const hamburger = document.getElementById('hamburger');
+        const navMenu = document.getElementById('nav-menu');
+
+        hamburger.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+        });
+        
+        function displayFlash(message, category) {
+            const container = document.getElementById('flash-message-container');
+            const div = document.createElement('div');
+            div.className = `flash ${category}`;
+            div.textContent = message;
+            container.appendChild(div);
+            setTimeout(() => div.remove(), 5000);
+        }
+
+        function showModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function hideModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        function closeAllModals() {
+            hideModal('upload-modal');
+            hideModal('subject-modal');
+            hideModal('delete-modal');
+            document.getElementById('file-upload-form').reset();
+            tempFile = null;
+        }
+
+        // --- FLASHCARD SELECTION LOGIC ---
+        
+        // Toggle specific card when clicked
+        function toggleCardSelect(id) {
+            const card = document.getElementById('card-' + id);
+            const checkbox = card.querySelector('input[type="checkbox"]');
+            
+            // Toggle checkbox state
+            checkbox.checked = !checkbox.checked;
+            
+            // Toggle visual state
+            if(checkbox.checked) {
+                card.classList.add('selected-card');
+            } else {
+                card.classList.remove('selected-card');
+            }
+        }
+
+        // Toggle All logic
+        function toggleSelectAll(source, subjectTag) {
+            const checkboxes = document.querySelectorAll(`.checkbox-${subjectTag}`);
+            checkboxes.forEach(cb => {
+                cb.checked = source.checked;
+                // Update visual state of the parent card
+                const card = document.getElementById('card-' + cb.value);
+                if(source.checked) {
+                    card.classList.add('selected-card');
+                } else {
+                    card.classList.remove('selected-card');
+                }
+            });
+        }
+
+        // --- DELETE LOGIC ---
+        function prepareBatchDelete() {
+            const checkedCount = document.querySelectorAll('input[name="question_ids"]:checked').length;
+            
+            if (checkedCount === 0) {
+                displayFlash("Please select at least one question card to delete.", "warning");
+                return;
+            }
+            document.getElementById('delete-count-display').textContent = checkedCount;
+            showModal('delete-modal');
+        }
+
+        function submitDeleteForm() {
+            document.getElementById('batch-delete-form').submit();
+        }
+
+        // --- UPLOAD LOGIC ---
+        function handleFileUpload(event) {
+            event.preventDefault(); 
+            const fileInput = document.getElementById('file-input');
+            if (fileInput.files.length === 0) {
+                displayFlash("Please select a file.", 'warning');
+                return false;
+            }
+            tempFile = fileInput.files[0]; 
+        
+            document.getElementById('selected-filename').textContent = tempFile.name;
+            hideModal('upload-modal');
+            showModal('subject-modal');
+            return false;
+        }
+
+        document.querySelectorAll('.subject-button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault(); 
+                const subject = this.getAttribute('data-subject');
+                document.getElementById('subject-tag-input').value = subject;
+                document.getElementById('final-submit-button').disabled = false;
+                document.querySelectorAll('.subject-button').forEach(btn => btn.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        document.getElementById('subject-selection-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            if (!tempFile || !document.getElementById('subject-tag-input').value) {
+                displayFlash("Upload Failed: Missing data.", 'danger');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file', tempFile, tempFile.name);
+            formData.append('subject_tag', document.getElementById('subject-tag-input').value);
+            const submitBtn = document.getElementById('final-submit-button');
+            submitBtn.textContent = "Uploading...";
+            submitBtn.disabled = true;
+
+            fetch(this.action, { method: 'POST', body: formData })
+            .then(response => {
+                if (response.redirected) window.location.href = response.url;
+                else window.location.reload();
+            })
+            .catch(error => {
+                displayFlash(`Upload Failed: ${error.message}`, 'danger');
+                submitBtn.disabled = false;
+                closeAllModals(); 
+            });
+        });
+
+        document.getElementById('hamburger').addEventListener('click', function() {
+            document.getElementById('nav-menu').classList.toggle('active');
+        });
+    </script>
+</body>
+</html>

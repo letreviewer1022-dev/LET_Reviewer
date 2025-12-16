@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" class="logo" alt="Logo"></a>
+        </div>
+
+        <button class="hamburger" id="hamburger">☰</button>
+
+        <ul class="nav-center" id="nav-menu">
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('quiz') }}">Quiz</a></li>
+            <li><a href="{{ url_for('mock') }}">Mock Exam</a></li>
+        </ul>
+
+        <div class="nav-right">
+            {% if 'username' in session %}
+                
+                {% if session.get('is_admin') %}
+                    <a href="{{ url_for('admin_dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% else %}
+                    <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% endif %}
+                
+            {% else %}
+                <a href="{{ url_for('login') }}" class="login-btn">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            
+            <div id="flash-popup-overlay" class="popup-overlay">
+                
+                <div class="popup-content" onclick="event.stopPropagation();">
+                    {% for category, message in messages %}
+                        
+                        <div class="alert alert-{{ category }}" role="alert">
+                            
+                            {{ message }}
+                            
+                            <button type="button" class="close-btn" aria-label="Close" 
+                                    onclick="closeFlashPopup();">
+                                &times;
+                            </button>
+                        </div>
+
+                    {% endfor %}
+                </div>
+                
+            </div>
+
+            <script>
+                function closeFlashPopup() {
+                    const overlay = document.getElementById('flash-popup-overlay');
+                    if (overlay) {
+                        overlay.style.display = 'none';
+                    }
+                }
+            </script>
+
+        {% endif %}
+    {% endwith %}
+    <section class="quiz-container">
+
+        <h2>Quiz Started</h2>
+        <p><strong>Subject:</strong> {{ subject|upper }}</p>
+        <p><strong>Total Items:</strong> {{ total_items }}</p>
+        <div class="quiz-timer">
+            <strong>Time Remaining:</strong>
+            <span id="timer" data-items="{{ total_items }}">--:--</span>
+        </div>
+
+        <hr>
+
+        <form id="quiz-form" method="POST" action="{{ url_for('submit_mock_exam') }}">
+            {% for q in questions %}
+            <div class="question-box">
+                <p class="question-text">{{ loop.index }}. {{ q.question_text }}</p>
+
+                <div class="choices">
+                    <label><input type="radio" name="q{{ q.id }}" value="A"> A. {{ q.choice_a }}</label>
+                    <label><input type="radio" name="q{{ q.id }}" value="B"> B. {{ q.choice_b }}</label>
+                    <label><input type="radio" name="q{{ q.id }}" value="C"> C. {{ q.choice_c }}</label>
+                    <label><input type="radio" name="q{{ q.id }}" value="D"> D. {{ q.choice_d }}</label>
+                </div>
+            </div>
+            {% endfor %}
+
+            <input type="hidden" name="time_spent" id="time-spent-input">
+            <!-- Buttons at the bottom -->
+            <div class="quiz-page-button-div" style="margin-top: 30px; text-align: center;">
+                <button type="submit" class="quiz-page-button" style="margin-right: 10px;">Submit Quiz</button>
+                <button type="button" class="quiz-page-button" onclick="quitQuiz();" style="background-color:#A94442;">Quit Quiz</button>
+            </div>
+        </form>
+
+    </section>
+    <script>
+        const timerElement = document.getElementById("timer");
+        const totalItems = parseInt(timerElement.dataset.items, 10);
+
+        let timeRemaining = 3 * 60 * 60;
+
+        const quizForm = document.getElementById('quiz-form');
+        const timeSpentInput = document.getElementById('time-spent-input');
+
+        function setTimeSpent() {
+            const timeSpent = totalTimeAllowed - timeRemaining;
+            timeSpentInput.value = timeSpent;
+        }
+
+        function updateTimer() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+
+            timerElement.textContent =
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                alert("Time is up! Your quiz will now be submitted.");
+                document.querySelector("form")?.submit();
+                setTimeSpent(); 
+                quizForm.submit();
+                return;
+            }
+
+            timeRemaining--;
+        }
+
+        quizForm.addEventListener('submit', function(event) {
+            setTimeSpent();
+        });
+        
+        updateTimer();
+        const timerInterval = setInterval(updateTimer, 1000);
+
+        function quitQuiz() {
+            if (confirm("Are you sure you want to quit the quiz? Your progress will not be saved.")) {
+                window.location.href = "{{ url_for('dashboard') }}"; // Redirect to safe page
+            }
+        }
+    </script>
+
+
+</body>
+</html>

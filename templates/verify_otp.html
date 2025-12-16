@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LET TLE Reviewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        
+        <div id="flash-popup-overlay" class="popup-overlay">
+            
+            <div class="popup-content" onclick="event.stopPropagation();">
+                {% for category, message in messages %}
+                    
+                    <div class="alert alert-{{ category }}" role="alert">
+                        
+                        {{ message }}
+                        
+                        <button type="button" class="close-btn" aria-label="Close" 
+                                onclick="closeFlashPopup();">
+                            &times;
+                        </button>
+                    </div>
+
+                {% endfor %}
+            </div>
+            
+        </div>
+
+        <script>
+            function closeFlashPopup() {
+                const overlay = document.getElementById('flash-popup-overlay');
+                if (overlay) {
+                    overlay.style.display = 'none';
+                }
+            }
+        </script>
+
+    {% endif %}
+{% endwith %}
+    <div class="signup-body">
+
+        <div class="signup-container">
+            <div class="card">
+                <div class="signup-logo">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="LET TLE Reviewer Logo">
+                    <p> LET TLE Reviewer </p>
+                </div>
+
+                <h1>
+                    OTP Verification
+                </h1>
+
+                <div class="input-group">
+                    <form method="post" action="{% if context == 'reset' %}
+                                    {{ url_for('reset_otp_page') }}
+                                {% else %}
+                                    {{ url_for('verify_otp') }}
+                                {% endif %}">
+                        <input type="text" name="otp_code" maxlength="6" placeholder="••••••" required
+                            class="input-field">
+                        <div class="action-row">
+                            <button class="btn-submit">Submit</button>
+                        </div>
+
+                        <div class="help-text">
+                            <p><a href="{{ url_for('resend_otp') }}">Resend Code</a></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

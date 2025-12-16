@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+<nav class="navbar">
+        <div class="nav-left">
+            <a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" class="logo" alt="Logo"></a>
+        </div>
+
+        <button class="hamburger" id="hamburger">☰</button>
+
+        <ul class="nav-center" id="nav-menu">
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('quiz') }}">Quiz</a></li>
+            <li><a href="{{ url_for('mock') }}">Mock Exam</a></li>
+        </ul>
+
+        <div class="nav-right">
+            {% if 'username' in session %}
+                
+                {% if session.get('is_admin') %}
+                    <a href="{{ url_for('admin_dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% else %}
+                    <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% endif %}
+                
+            {% else %}
+                <a href="{{ url_for('login') }}" class="login-btn">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        
+        <div id="flash-popup-overlay" class="popup-overlay">
+            
+            <div class="popup-content" onclick="event.stopPropagation();">
+                {% for category, message in messages %}
+                    
+                    <div class="alert alert-{{ category }}" role="alert">
+                        
+                        {{ message }}
+                        
+                        <button type="button" class="close-btn" aria-label="Close" 
+                                onclick="closeFlashPopup();">
+                            &times;
+                        </button>
+                    </div>
+
+                {% endfor %}
+            </div>
+            
+        </div>
+
+        <script>
+            function closeFlashPopup() {
+                const overlay = document.getElementById('flash-popup-overlay');
+                if (overlay) {
+                    overlay.style.display = 'none';
+                }
+            }
+        </script>
+
+    {% endif %}
+{% endwith %}
+<div class="results-container">
+    <div class="results-header">
+        <h2>Quiz Results</h2>
+    </div>
+
+    <div class="results-summary">
+        <p><strong>Username:</strong> {{ username }}</p>
+        <p><strong>Exam:</strong> {{ subject|upper }}</p>
+        <p><strong>Time Taken:</strong> {{ time_taken }}</p>
+        <p><strong>Score:</strong> {{ score }}/{{ total_questions }}</p>
+    </div>
+
+    <div class="question-breakdown">
+        <h3>Question Breakdown</h3>
+
+        {% for q in results %}
+        <div class="question-box-result {% if q.selected == q.correct %}correct{% else %}incorrect{% endif %}">
+            <p class="question-text">{{ loop.index }}. {{ q.question_text }}</p>
+            <div class="answer {% if q.selected == q.correct %}correct{% else %}incorrect{% endif %}">
+                Your Answer: {{ q.selected or 'No answer' }}
+            </div>
+            <div class="answer correct">
+                Correct Answer: {{ q.correct }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+</body>
+</html>

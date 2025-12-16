@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LET TLE Reviewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" class="logo" alt="Logo"></a>
+        </div>
+
+        <button class="hamburger" id="hamburger">☰</button>
+
+        <ul class="nav-center" id="nav-menu">
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('quiz') }}">Quiz</a></li>
+            <li><a href="{{ url_for('mock') }}">Mock Exam</a></li>
+        </ul>
+
+        <div class="nav-right">
+            {% if 'username' in session %}
+                
+                {% if session.get('is_admin') %}
+                    <a href="{{ url_for('admin_dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% else %}
+                    <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% endif %}
+                
+            {% else %}
+                <a href="{{ url_for('login') }}" class="login-btn">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            
+            <div id="flash-popup-overlay" class="popup-overlay">
+                
+                <div class="popup-content" onclick="event.stopPropagation();">
+                    {% for category, message in messages %}
+                        
+                        <div class="alert alert-{{ category }}" role="alert">
+                            
+                            {{ message }}
+                            
+                            <button type="button" class="close-btn" aria-label="Close" 
+                                    onclick="closeFlashPopup();">
+                                &times;
+                            </button>
+                        </div>
+
+                    {% endfor %}
+                </div>
+                
+            </div>
+
+            <script>
+                function closeFlashPopup() {
+                    const overlay = document.getElementById('flash-popup-overlay');
+                    if (overlay) {
+                        overlay.style.display = 'none';
+                    }
+                }
+            </script>
+
+        {% endif %}
+    {% endwith %}
+
+    <div class="intro">
+        <div class="intro-text">   
+            <h1> Mock Exam </h1>
+            <p> In this section, you can test your knowledge and readiness through a comprehensive mock examination designed to simulate the actual licensure exam experience. This allows you to assess your strengths and identify areas for improvement in a timed, exam-like environment. </p>
+            <button onclick="document.getElementById('started-section').scrollIntoView({ behavior: 'smooth' });" class="intro-button">
+                Start Mock Exam
+            </button>
+        </div>
+        
+        <div class="intro-image">
+            <img src="{{ url_for('static', filename='images/let-intro-examination.jpg')}}" alt="LET Examination">
+        </div>
+    </div>
+
+    <div class="quiz-intro">
+        <h1> 
+            Mock Exam Instructions
+        </h1>
+
+        <p>
+            In this section, you will undertake a full-length mock exam that mirrors the structure and content of the actual licensure examination. This practice exam is designed to help you become familiar with the format, timing, and types of questions you will encounter, allowing you to build confidence and improve your test-taking strategies.
+        </p>
+
+        <p>
+            The mock exam will have a set of <strong>150 number</strong> of question per subject covering <strong>Professional Education, TLE Specialization, and General Education</strong>. You will have a total of <strong>3 hours</strong> to complete the exam, simulating real exam conditions. <strong>Make sure to manage your time effectively and answer all questions to the best of your ability</strong>.
+        </p>
+    </div>
+    <section id="started-section" class="quiz-section">
+        <div class="started-text">
+            <H1> Start Mock Exam </H1>
+        </div>
+    </section>
+
+    <form method="POST" action="{{ url_for('mock') }}">
+        <div class="quiz-button-div">
+            <p>
+                Click the START button when you are ready to begin the quiz.
+            </p>
+            
+            <input type="hidden" name="action" value="start">
+
+            <button type="submit" class="quiz-button start-button" 
+                title="{% if not logged_in %}You must log in first{% else %}Start the exam{% endif %}">
+                START
+            </button>
+        </div>
+    </form>
+    {% if not logged_in %}
+        <p class="login-warning">⚠ You must log in to start the quiz.</p>
+    {% endif %}
+
+    <footer class="site-footer">
+        <p>&copy; 2025 LET TLE Reviewer. All rights reserved.</p>
+        <p>
+            All icon made by 
+            <a href="https://www.freepik.com/icon/quiz_3407041" target="_blank" rel="noopener noreferrer">
+                Freepik
+            </a> 
+            from 
+            <a href="https://www.freepik.com" target="_blank" rel="noopener noreferrer">
+                www.freepik.com
+            </a>
+        </p>
+    </footer>
+
+
+    <script>
+        const hamburger = document.getElementById('hamburger');
+        const navMenu = document.getElementById('nav-menu');
+
+        hamburger.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+        });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,159 @@
+{% macro include_admin_attempt_cards(attempts) %}
+    {% if attempts %}
+        <div class="question-grid" id="admin-attempt-history-grid"> 
+            {% for a in attempts %}
+            <div class="question-card attempt-card"
+                 data-username="{{ a.username|lower }}" 
+                 data-subject="{{ a.subject|lower if a.subject else '' }}">
+                
+                <div class="card-header">
+                    <span class="card-id">Attempt #{{ loop.revindex }}</span>
+                    <span class="card-subject">{{ a.subject|upper if a.subject else 'N/A' }}</span>
+                </div>
+
+                <div class="card-body">
+                    
+                    <p class="question-attempt-text">
+                        <strong>Username:</strong> 
+                        {{ a.username }}
+                    </p>
+
+                    <p class="question-attempt-text">
+                        <strong>Date Taken:</strong> 
+                        {{ a.date_taken|localize_time }}
+                    </p>
+                    
+                    <p class="question-attempt-text">
+                        <strong>Score:</strong> 
+                        <span class="attempt-score">
+                            {{ "%.0f"|format(a.score) }} / {{ "%.0f"|format(a.max_score) }}
+                        </span>
+                    </p>
+                    
+                    <p class="question-attempt-text">
+                        <strong>Time Spent:</strong> 
+                        <span>{{ a.duration_seconds|format_duration }}</span>
+                    </p>
+
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="no-attempts">No quiz attempts recorded yet. Start your first quiz now!</p>
+    {% endif %}
+{% endmacro %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Students</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" class="logo" alt="Logo"></a>
+        </div>
+        <button class="hamburger" id="hamburger">☰</button>
+        <ul class="nav-center" id="nav-menu">
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('quiz') }}">Quiz</a></li>
+            <li><a href="{{ url_for('mock') }}">Mock Exam</a></li>
+        </ul>
+        <div class="nav-right">
+            {% if 'username' in session %}
+                {% if session.get('is_admin') %}
+                    <a href="{{ url_for('admin_dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% else %}
+                    <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% endif %}
+            {% else %}
+                <a href="{{ url_for('login') }}" class="login-btn">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- DASHBOARD -->
+    <div class="dashboard-container admin-dashboard-question">
+        <!-- SIDEBAR -->
+        <div class="user-sidebar">
+            <img src="{{ url_for('static', filename='images/admin_profile.png') }}" alt="User Profile Picture" class="profile-pic">
+            {% if current_user %}
+                <span class="user-name">{{ current_user.username }}</span>
+            {% else %}
+                <span class="user-name">Guest User</span>
+            {% endif %}
+            <p>Admin</p>
+            <ul class="sidebar-menu">
+                <li><a href="{{ url_for('admin_question') }}">Questions</a></li>
+                <li><a href="{{ url_for('admin_student') }}">Students</a></li>
+                <li><a href="{{ url_for('admin_attempt') }}" class="active-link">Attempts</a></li>
+            </ul>
+            <div class="flex-grow"></div>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+
+        <div class="content-area">
+            <header class="main-header">
+                <h1>Students Overview</h1>
+            </header>
+
+            <!-- SEARCH & FILTER -->
+        <div class="content-area">
+            <div class="admin-controls">
+                <input type="text" id="username-search" placeholder="Search by student username..." class="search-input">
+                
+                <select id="subject-filter" class="search-input">
+                    <option value="">All Subjects & Exams</option>
+                    
+                    {% set subjects_list = attempts|map(attribute='subject')|unique|list %}
+                    {% for s in subjects_list %}
+                        {% if s %}
+                        {# Ensure the value is lowercase for matching #}
+                        <option value="{{ s|lower }}">{{ s }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            {{ include_admin_attempt_cards(attempts) }}
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('hamburger').addEventListener('click', function() {
+            document.getElementById('nav-menu').classList.toggle('active');
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('username-search');
+            const filterSelect = document.getElementById('subject-filter');
+            const cards = document.querySelectorAll('#admin-attempt-history-grid .attempt-card');
+
+            function filterAttempts() {
+                const searchText = searchInput.value.toLowerCase();
+                const selectedSubject = filterSelect.value.toLowerCase();
+
+                cards.forEach(card => {
+                    const username = card.getAttribute('data-username') || '';
+                    const subject = card.getAttribute('data-subject') || '';
+                    const matchesSearch = username.includes(searchText);
+                    const matchesSubject = selectedSubject === '' || subject === selectedSubject;
+                    if (matchesSearch && matchesSubject) {
+                    card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+            searchInput.addEventListener('input', filterAttempts);
+            filterSelect.addEventListener('change', filterAttempts);
+        });
+    </script>
+</body>
+</html>

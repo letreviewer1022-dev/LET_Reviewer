@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LET TLE Reviewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet">
+</head>
+<body>
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        
+        <div id="flash-popup-overlay" class="popup-overlay">
+            
+            <div class="popup-content" onclick="event.stopPropagation();">
+                {% for category, message in messages %}
+                    
+                    <div class="alert alert-{{ category }}" role="alert">
+                        
+                        {{ message }}
+                        
+                        <button type="button" class="close-btn" aria-label="Close" 
+                                onclick="closeFlashPopup();">
+                            &times;
+                        </button>
+                    </div>
+
+                {% endfor %}
+            </div>
+            
+        </div>
+
+        <script>
+            function closeFlashPopup() {
+                const overlay = document.getElementById('flash-popup-overlay');
+                if (overlay) {
+                    overlay.style.display = 'none';
+                }
+            }
+        </script>
+
+    {% endif %}
+{% endwith %}
+    <div class="signup-body">
+
+        <div class="signup-container">
+            <div class="card">
+                <div class="signup-logo">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="LET TLE Reviewer Logo">
+                    <p> LET TLE Reviewer </p>
+                </div>
+
+                <h1>
+                    Register
+                </h1>
+
+                <div class="input-group">
+                    <form method="post" action="{{ url_for('register') }}">
+                        <input type="email" name="email" placeholder="Email" required class="input-field">
+                        <input type="text" name="username" placeholder="Username" required class="input-field">
+                        <input type="text" name="cellphone" placeholder="Cellphone Number" required class="input-field">
+                        
+                        <select name="major" required class="input-field major-select">
+                            <option value="" disabled selected>--- Select Major ---</option>
+                            <option value="CP">Computer Programming</option>
+                            <option value="ET">Electrical Technology</option>
+                            <option value="HE">Home Economics</option>
+                            <option value="IA">Industrial Arts</option>
+                            <option value="ICT">Information and Communications Technology</option>
+                        </select>
+                        
+                        <div class="password-container">
+                            <input type="password" id="password_input" name="password" placeholder="Password" required class="input-field">
+                            <button type="button" class="toggle-password" id="password-toggle-btn" onclick="togglePasswordVisibility('password_input', this)">
+                                <span class="icon-visible"></span>
+                            </button>
+                        </div>
+                        <div class="password-container">
+                            <input type="password" id="confirm_password_input" name="confirm_password" placeholder="Confirm Password" required class="input-field">
+                            <button type="button" class="toggle-password" id="password-toggle-btn" onclick="togglePasswordVisibility('confirm_password_input', this)">
+                                <span class="icon-visible"></span>
+                            </button>
+                        </div>
+                        <div class="help-text">
+                            <p> Already have an Account? <a href="{{ url_for('login') }}">Log-in</a></p>
+                        </div>
+                        <div class="action-row">
+                            <button type="submit" class="btn-submit">Register</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePasswordVisibility(inputId, buttonElement) {
+            const input = document.getElementById(inputId);
+            // Get the inner icon element
+            const iconElement = buttonElement.querySelector('span');
+
+            if (input.type === "password") {
+                input.type = "text";
+                // Change icon to hidden state (e.g., Lock)
+                iconElement.classList.remove('icon-visible');
+                iconElement.classList.add('icon-hidden');
+            } else {
+                input.type = "password";
+                // Change icon back to visible state (e.g., Eye)
+                iconElement.classList.remove('icon-hidden');
+                iconElement.classList.add('icon-visible');
+            }
+        }
+    </script>
+
+</body>
+
+</html>

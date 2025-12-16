@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LET TLE Reviewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet">
+</head>
+<body>
+    
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" class="logo" alt="Logo"></a>
+        </div>
+
+        <button class="hamburger" id="hamburger">☰</button>
+
+        <ul class="nav-center" id="nav-menu">
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('quiz') }}">Quiz</a></li>
+            <li><a href="{{ url_for('mock') }}">Mock Exam</a></li>
+        </ul>
+
+        <div class="nav-right">
+            {% if 'username' in session %}
+                
+                {% if session.get('is_admin') %}
+                    <a href="{{ url_for('admin_dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% else %}
+                    <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% endif %}
+                
+            {% else %}
+                <a href="{{ url_for('login') }}" class="login-btn">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            
+            <div id="flash-popup-overlay" class="popup-overlay">
+                
+                <div class="popup-content" onclick="event.stopPropagation();">
+                    {% for category, message in messages %}
+                        
+                        <div class="alert alert-{{ category }}" role="alert">
+                            
+                            {{ message }}
+                            
+                            <button type="button" class="close-btn" aria-label="Close" 
+                                    onclick="closeFlashPopup();">
+                                &times;
+                            </button>
+                        </div>
+
+                    {% endfor %}
+                </div>
+                
+            </div>
+
+            <script>
+                function closeFlashPopup() {
+                    const overlay = document.getElementById('flash-popup-overlay');
+                    if (overlay) {
+                        overlay.style.display = 'none';
+                    }
+                }
+            </script>
+
+        {% endif %}
+    {% endwith %}
+    <div class="intro">
+        <div class="intro-text">   
+            <h1> Quiz </h1>
+            <p> In this section, you can test your knowledge through interactive quizzes designed specifically for TLE (Technology and Livelihood Education) specialization, Professional Education, and General Education. Each quiz is carefully crafted to challenge your understanding, reinforce key concepts, and help you prepare effectively for exams. Whether you want to strengthen your foundational knowledge or practice advanced topics, these quizzes provide instant feedback, track your progress, and make learning engaging and efficient. </p>
+            <button onclick="document.getElementById('started-section').scrollIntoView({ behavior: 'smooth' });" class="intro-button">
+                Start Quiz
+            </button>
+        </div>
+        
+        <div class="intro-image">
+            <img src="{{ url_for('static', filename='images/let-intro-examination.jpg')}}" alt="LET Examination">
+        </div>
+    </div>
+
+    <div class="quiz-intro">
+        <h1> 
+            Quiz Instructions
+        </h1>
+
+        <p>
+            In this section, you will choose among three subjects.
+        </p>
+
+        <p>
+            > <strong>Professional Education</strong> – This subject focuses on the principles and practices of teaching, educational psychology, curriculum development, assessment strategies, and classroom management. It is designed to equip future educators with the knowledge and skills necessary to effectively teach and support students in various learning environments.
+        </p>
+
+        <p>
+            > <strong>TLE Specialization</strong> – This subject covers various technical and vocational skills related to Technology and Livelihood Education (TLE). It includes topics such as home economics, agriculture, industrial arts, information and communication technology, and entrepreneurship. The aim is to prepare students for practical applications in their chosen TLE specialization.
+        </p>
+
+        <p>
+            > <strong>General Education</strong> – This subject encompasses a broad range of foundational topics that provide students with essential knowledge and skills across various disciplines. It typically includes subjects such as mathematics, science, language arts, social studies, and humanities, aiming to develop critical thinking, communication, and problem-solving abilities.
+        </p>
+
+        <p>
+            After choosing a subject, you will select the number of items you would like to answer. Each item must be answered within <strong> 1 minute </strong> .
+        </p>
+    </div>
+    <section id="started-section" class="quiz-section">
+        <div class="started-text">
+            <H1> Start Quiz </H1>
+        </div>
+
+        <form method="POST">
+        <input type="hidden" name="action" value="subject">
+
+        <h3>Select Subject</h3>
+        <div class="quiz-button-div">
+            <button class="quiz-button {% if selected_subject == 'profed' %}active{% endif %}"
+                    name="value" value="profed">Professional Education</button>
+
+            <button class="quiz-button {% if selected_subject == 'cp' %}active{% endif %}"
+                    name="value" value="cp">TLE Specialization</button>
+
+            <button class="quiz-button {% if selected_subject == 'gened' %}active{% endif %}"
+                    name="value" value="gened">General Education</button>
+        </div>
+    </form>
+
+    </section>
+
+    <section id="items" class="quiz-section">
+        <form method="POST">
+        <input type="hidden" name="action" value="items">
+
+        <h3>Select Number of Items</h3>
+        <div class="quiz-button-div">
+            {% for i in [25, 50, 75, 100] %}
+            <button class="quiz-button {% if selected_items == i %}active{% endif %}"
+                    name="value" value="{{ i }}">{{ i }} items</button>
+            {% endfor %}
+        </div>
+    </form>
+    </section>
+
+    <div class="quiz-button-div">
+        <form method="POST">
+            <input type="hidden" name="action" value="start">
+
+            <div class="quiz-button-div start-div">
+                <p>Click START when you are ready.</p>
+                <button class="quiz-button start-button">START</button>
+            </div>
+        </form>
+    </div>
+    {% if not logged_in %}
+        <p class="login-warning">⚠ You must log in to start the quiz.</p>
+    {% endif %}
+    <footer class="site-footer">
+        <p>&copy; 2025 LET TLE Reviewer. All rights reserved.</p>
+        <p>
+            All icon made by 
+            <a href="https://www.freepik.com/icon/quiz_3407041" target="_blank" rel="noopener noreferrer">
+                Freepik
+            </a> 
+            from 
+            <a href="https://www.freepik.com" target="_blank" rel="noopener noreferrer">
+                www.freepik.com
+            </a>
+        </p>
+    </footer>
+
+    <script>
+        const hamburger = document.getElementById('hamburger');
+        const navMenu = document.getElementById('nav-menu');
+
+        hamburger.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+        });
+    </script>
+{% if not logged_in %}
+    <script>
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+        const subjectButtons = document.querySelectorAll(
+            "#started-section .quiz-button"
+        );
+
+        const itemButtons = document.querySelectorAll(
+            "#items .quiz-button"
+        );
+
+        const startButton = document.querySelector(".start-button");
+
+        /* ============================= */
+        /* SUBJECT BUTTONS */
+        /* ============================= */
+        subjectButtons.forEach(button => {
+            button.addEventListener("click", function () {
+
+                alert("Log-in first");
+                window.location.href = "{{ url_for('login') }}"
+
+                subjectButtons.forEach(btn => btn.classList.remove("active"));
+                this.classList.add("active");
+
+                submitToFlask("subject", this.value);
+            });
+        });
+
+        /* ============================= */
+        /* ITEM BUTTONS */
+        /* ============================= */
+        itemButtons.forEach(button => {
+            button.addEventListener("click", function () {
+
+                alert("Log-in first");
+                window.location.href = "{{ url_for('login') }}"
+
+                itemButtons.forEach(btn => btn.classList.remove("active"));
+                this.classList.add("active");
+
+                submitToFlask("items", this.value);
+            });
+        });
+
+        /* ============================= */
+        /* START BUTTON */
+        /* ============================= */
+        if (startButton) {
+            startButton.addEventListener("click", function () {
+
+                alert("Log-in first");
+                window.location.href = "{{ url_for('login') }}"
+
+                submitToFlask("start", "1");
+            });
+        }
+
+        /* ============================= */
+        /* FLASK POST HELPER */
+        /* ============================= */
+        function submitToFlask(action, value) {
+            const form = document.createElement("form");
+            form.method = "POST";
+            form.action = "/quiz";
+
+            const actionInput = document.createElement("input");
+            actionInput.type = "hidden";
+            actionInput.name = "action";
+            actionInput.value = action;
+
+            const valueInput = document.createElement("input");
+            valueInput.type = "hidden";
+            valueInput.name = "value";
+            valueInput.value = value;
+
+            form.appendChild(actionInput);
+            form.appendChild(valueInput);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+    });
+
+    </script>
+{% endif %}
+</body>
+
+</html>

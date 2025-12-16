@@ -1,0 +1,133 @@
+{% macro include_student_cards(students_list) %}
+    {% if students_list %}
+        <!-- Card Grid -->
+        <div class="question-grid" id="student-card-grid">
+            {% for s in students_list %}
+            <div class="question-card" data-username="{{ s.username|lower }}" data-major="{{ s.major|lower if s.major else '' }}">
+                <div class="card-header">
+                    <span class="card-id">#{{ s.id }}</span>
+                    <span class="card-subject">{{ s.major if s.major else 'N/A' }}</span>
+                </div>
+                <div class="card-body">
+                    <p class="question-attempt-text"><strong>Username:</strong> {{ s.username }}</p>
+                    <p class="question-attempt-text"><strong>Email:</strong> {{ s.email }}</p>
+                    <p class="question-attempt-text"><strong>Cellphone:</strong> {{ s.cellphone }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="no-questions">No students found.</p>
+    {% endif %}
+{% endmacro %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Students</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" class="logo" alt="Logo"></a>
+        </div>
+        <button class="hamburger" id="hamburger">☰</button>
+        <ul class="nav-center" id="nav-menu">
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('quiz') }}">Quiz</a></li>
+            <li><a href="{{ url_for('mock') }}">Mock Exam</a></li>
+        </ul>
+        <div class="nav-right">
+            {% if 'username' in session %}
+                {% if session.get('is_admin') %}
+                    <a href="{{ url_for('admin_dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% else %}
+                    <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% endif %}
+            {% else %}
+                <a href="{{ url_for('login') }}" class="login-btn">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- DASHBOARD -->
+    <div class="dashboard-container admin-dashboard-question">
+        <!-- SIDEBAR -->
+        <div class="user-sidebar">
+            <img src="{{ url_for('static', filename='images/admin_profile.png') }}" alt="User Profile Picture" class="profile-pic">
+            {% if current_user %}
+                <span class="user-name">{{ current_user.username }}</span>
+            {% else %}
+                <span class="user-name">Guest User</span>
+            {% endif %}
+            <p>Admin</p>
+            <ul class="sidebar-menu">
+                <li><a href="{{ url_for('admin_question') }}">Questions</a></li>
+                <li><a href="{{ url_for('admin_student') }}" class="active-link">Students</a></li>
+                <li><a href="{{ url_for('admin_attempt') }}">Attempts</a></li>
+            </ul>
+            <div class="flex-grow"></div>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+
+        <div class="content-area">
+            <header class="main-header">
+                <h1>Students Overview</h1>
+            </header>
+
+            <!-- SEARCH & FILTER -->
+            <div class="admin-controls">
+                <input type="text" id="username-search" placeholder="Search by username..." class="search-input">
+                <select id="major-filter" class="search-input">
+                    <option value="">All Majors</option>
+                    {% set majors_list = students|map(attribute='major')|unique|list %}
+                    {% for m in majors_list %}
+                        {% if m %}
+                        <option value="{{ m|lower }}">{{ m }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Student Flashcards -->
+            {{ include_student_cards(students) }}
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('hamburger').addEventListener('click', function() {
+            document.getElementById('nav-menu').classList.toggle('active');
+        });
+
+        const searchInput = document.getElementById('username-search');
+        const filterSelect = document.getElementById('major-filter');
+        const cards = document.querySelectorAll('#student-card-grid .question-card');
+
+        function filterCards() {
+            const searchText = searchInput.value.toLowerCase();
+            const selectedMajor = filterSelect.value.toLowerCase();
+
+            cards.forEach(card => {
+                const username = card.getAttribute('data-username');
+                const major = card.getAttribute('data-major');
+
+                const matchesSearch = username.includes(searchText);
+                const matchesMajor = selectedMajor === '' || major === selectedMajor;
+
+                if (matchesSearch && matchesMajor) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        searchInput.addEventListener('input', filterCards);
+        filterSelect.addEventListener('change', filterCards);
+    </script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LET TLE Reviewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" class="logo" alt="Logo"></a>
+        </div>
+
+        <button class="hamburger" id="hamburger">☰</button>
+
+        <ul class="nav-center" id="nav-menu">
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('quiz') }}">Quiz</a></li>
+            <li><a href="{{ url_for('mock') }}">Mock Exam</a></li>
+        </ul>
+
+        <div class="nav-right">
+            {% if 'username' in session %}
+                
+                {% if session.get('is_admin') %}
+                    <a href="{{ url_for('admin_dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% else %}
+                    <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='images/dashboard.png') }}" class="login-btn-img"></a>
+                {% endif %}
+                
+            {% else %}
+                <a href="{{ url_for('login') }}" class="login-btn">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        
+        <div id="flash-popup-overlay" class="popup-overlay">
+            
+            <div class="popup-content" onclick="event.stopPropagation();">
+                {% for category, message in messages %}
+                    
+                    <div class="alert alert-{{ category }}" role="alert">
+                        
+                        {{ message }}
+                        
+                        <button type="button" class="close-btn" aria-label="Close" 
+                                onclick="closeFlashPopup();">
+                            &times;
+                        </button>
+                    </div>
+
+                {% endfor %}
+            </div>
+            
+        </div>
+
+        <script>
+            function closeFlashPopup() {
+                const overlay = document.getElementById('flash-popup-overlay');
+                if (overlay) {
+                    overlay.style.display = 'none';
+                }
+            }
+        </script>
+
+    {% endif %}
+{% endwith %}
+
+<div class="dashboard-container admin-dashboard-question">
+        <!-- SIDEBAR (Unchanged) -->
+        <div class="user-sidebar">
+            <img src="{{ url_for('static', filename='images/admin_profile.png') }}" alt="User Profile Picture" class="profile-pic">
+                {% if current_user %}
+                    <span class="user-name">{{ current_user.username }}</span>
+                {% else %}
+                    <span class="user-name">Guest User</span>
+                {% endif %}
+            <p>Admin</p>
+            <ul class="sidebar-menu">
+                <li><a href="{{ url_for('admin_question')}}">Questions</a></li>
+                <li><a href="{{ url_for('admin_student') }}">Students</a></li>
+                <li><a href="{{ url_for('admin_attempt') }}">Attempts</a></li>
+            </ul> 
+            <div class="flex-grow"></div> 
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+
+        <div class="content-area">
+            <header class="main-header">
+                <h1>Admin Management</h1>
+            </header>
+            
+        </div> 
+    </div> 
+    <script>
+        const hamburger = document.getElementById('hamburger');
+        const navMenu = document.getElementById('nav-menu');
+
+        hamburger.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+        });
+
+        document.getElementById('quizButton').addEventListener('click', function() {
+            window.location.href = "{{ url_for('quiz') }}";
+        });
+
+        document.getElementById('mockButton').addEventListener('click', function() {
+            window.location.href = "{{ url_for('mock') }}";
+        });
+    </script>
+</body>
+</html>
