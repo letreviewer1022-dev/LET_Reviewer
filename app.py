@@ -77,12 +77,12 @@ class Attempt(db.Model):
 
 
 # OTP #
-BREVO_API_KEY = "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"
+BREVO_API_KEY = os.environ.get("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")
 SENDER_EMAIL = "letreviewer1022@gmail.com"
 SENDER_NAME = "LET Reviewer"
 
 configuration = sib_api_v3_sdk.Configuration()
-configuration.api_key['api-key'] = "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"
+configuration.api_key['api-key'] = BREVO_API_KEY
 
 api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
 
