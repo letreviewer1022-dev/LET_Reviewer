@@ -8,6 +8,8 @@ import sib_api_v3_sdk
 from sib_api_v3_sdk.rest import ApiException
 from docx import Document
 from pytz import timezone as localtimezone
+from dotenv import load_dotenv
+
 
 app = Flask(__name__)
 app.secret_key = "TUPC_DED_REVIEWER_1022"
@@ -77,7 +79,8 @@ class Attempt(db.Model):
 
 
 # OTP #
-BREVO_API_KEY = os.environ.get("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")
+load_dotenv()
+BREVO_API_KEY = os.environ.get("BREVO_API_KEY")
 SENDER_EMAIL = "letreviewer1022@gmail.com"
 SENDER_NAME = "LET Reviewer"
 
