@@ -3,4 +3,7 @@ Flask-SQLAlchemy
 sib-api-v3-sdk
 python-docx
 pytz
+
 werkzeug
+
+python-dotenv
